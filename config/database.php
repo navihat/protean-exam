@@ -112,6 +112,17 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        // Attempts and logs live in MongoDB (docs/DECISIONS.md D4).
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'dsn' => env('MONGODB_URI', 'mongodb://127.0.0.1:27017'),
+            'database' => env('MONGODB_DATABASE', 'exam'),
+            'options' => [
+                // Fail fast instead of the driver's 30s default when Mongo is down.
+                'serverSelectionTimeoutMS' => (int) env('MONGODB_TIMEOUT_MS', 3000),
+            ],
+        ],
+
     ],
 
     /*
