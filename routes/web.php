@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,8 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::view('/', 'admin.dashboard')->name('dashboard');
+
+    Route::resource('exams', Admin\ExamController::class);
 });
 
 require __DIR__.'/auth.php';
