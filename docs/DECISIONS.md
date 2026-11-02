@@ -6,7 +6,7 @@ README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
 
 | Mã | Chủ đề | Trạng thái |
 |---|---|---|
-| D1 | Laravel 11 dù đã hết hạn bảo mật | Đề xuất – **cần bạn quyết** |
+| D1 | Laravel 11 dù đã hết hạn bảo mật | **Chốt** |
 | D2 | Frontend: Blade + Alpine.js | Đề xuất |
 | D3 | Auth: Breeze (web) + Sanctum (API) | Đề xuất |
 | D4 | Phân chia MySQL / MongoDB | Đề xuất |
@@ -25,8 +25,16 @@ README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
 
 ### D1 – Laravel 11 dù đã hết hạn bảo mật
 - **Bối cảnh:** Đề bắt buộc Laravel 11. Nhánh 11.x đã hết hạn hỗ trợ bảo mật; Packagist ghi nhận advisory chưa vá trên 11.x (ví dụ CVE-2026-48019 – CRLF injection ở rule `email` mặc định). Composer 2.9+ mặc định **chặn** cài các bản có advisory.
-- **Đề xuất:** Dùng bản 11.x mới nhất. Trong `composer.json` chỉ bỏ qua **đúng các advisory ID** của `laravel/framework`, không tắt cơ chế chặn toàn cục. Ghi rõ trong README là chỉ dùng cho bài test, môi trường production phải lên 12/13.
-- **Phương án thay thế:** Dùng Laravel 12, nhưng như vậy là lệch đề.
+- **Chốt (02/11/2026):** Dùng `laravel/framework` **v11.57.1**. `composer.json` → `config.policy.advisories.ignore-id` chỉ bỏ qua **đúng 5 advisory** ảnh hưởng tới bản này, mỗi ID kèm lý do. Không tắt cơ chế chặn toàn cục. README ghi rõ chỉ dùng cho bài test, production phải lên 12/13.
+
+| Advisory | Nội dung | Ảnh hưởng tới dự án / cách giảm thiểu |
+|---|---|---|
+| PKSA-b41t-wbzk-9q51 (CVE-2026-114509) | TokenGuard auth bypass | Không dùng guard `token` cũ, chỉ dùng Sanctum |
+| PKSA-d5tc-s1qs-h781 (CVE-2026-102279) | XSS ở trang debug | `APP_DEBUG=false` ngoài môi trường local |
+| PKSA-m5cs-t1y6-qpcs | Path confusion ở Temporary Signed URL | **Liên quan T21:** route preview kiểm tra lại `document` khớp id đã ký và có test cho trường hợp sửa path (D13) |
+| PKSA-3r5d-mb8f-1qw9, PKSA-mdq4-51ck-6kdq (CVE-2026-48019) | CRLF injection ở rule `email` mặc định | Dùng `email:rfc,strict`, không đưa email người dùng vào header thô |
+
+- **Phương án đã loại:** Laravel 12, vì lệch đề T01.
 
 ### D2 – Frontend: Blade + Alpine.js
 - Dùng Breeze (Blade stack). Riêng trang làm bài và trang gói IELTS dùng Alpine.js gọi **chính API REST** (Sanctum stateful cookie), nhờ vậy API được dùng thật chứ không chỉ để cho có, và mở xem thử không reload trang.

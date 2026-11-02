@@ -3,7 +3,7 @@
 ## 1. Hạ tầng (Docker)
 
 ```
-            :8080
+            :8000
   browser ───────► nginx ──fastcgi:9000──► app (php-fpm 8.3)
                                             │        │
                                        mysql:3306  mongo:27017
