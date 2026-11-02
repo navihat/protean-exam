@@ -64,7 +64,7 @@ services:
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - .:/var/www/html
-    command: sh -c "npm install --no-audit --no-fund && npm run build"
+    command: sh -c "[ -d node_modules ] || npm ci --no-audit --no-fund; npm run build"
 
 volumes:
   mysql-data:
