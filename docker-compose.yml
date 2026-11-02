@@ -56,14 +56,15 @@ services:
       timeout: 5s
       retries: 30
 
-  # Builds Vite assets once on `up`, then exits. Dev mode: docker compose run --rm -p 5173:5173 node npm run dev
+  # Rebuilds Vite assets on every `up` (Tailwind only emits classes found in the views), then exits.
+  # Dev mode with hot reload: docker compose run --rm -p 5173:5173 node npm run dev
   node:
     image: node:22-alpine
     working_dir: /var/www/html
     user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - .:/var/www/html
-    command: sh -c "[ -f public/build/manifest.json ] || (npm ci && npm run build)"
+    command: sh -c "npm install --no-audit --no-fund && npm run build"
 
 volumes:
   mysql-data:
