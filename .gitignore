@@ -31,3 +31,6 @@ yarn-error.log
 
 # Đề bài gốc – không public lên repo (bản md ở docs/REQUIREMENTS.md)
 /Pros Test*.pdf
+
+# Understand-Anything knowledge graph (generated locally, see /understand)
+/.ua/
