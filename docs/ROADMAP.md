@@ -7,7 +7,7 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 
 - [x] **PR1 `chore/T01-T02-bootstrap-docker`**: Laravel 11 skeleton, Dockerfile (php-fpm + ext mongodb), nginx, MySQL 8, Mongo 7, entrypoint tự setup, CI workflow
   - Xong khi: `docker compose up -d` → mở `localhost:8000` thấy trang Laravel
-- [ ] **PR2 `feat/T04-T05-mongodb-connection`**: `mongodb/laravel-mongodb`, connection `mongodb`, `app:check-connections`, trait `RefreshMongo`, phpunit dùng DB `exam_testing`
+- [x] **PR2 `feat/T04-T05-mongodb-connection`**: `mongodb/laravel-mongodb`, connection `mongodb`, `app:check-connections`, trait `RefreshMongo`, phpunit dùng DB `exam_testing`
   - Xong khi: command in OK cho 2 DB; có test đọc/ghi Model Mongo
 - [ ] **PR3 `feat/T03-T07-T08-schema-seed`**: migration users(role), exams (soft delete), questions, options; migration index Mongo (attempts, activity_logs); enum; factory; seeder idempotent (admin, student, 2–3 đề mẫu)
   - Xong khi: `migrate:fresh --seed` không lỗi, chạy lại seeder không nhân bản dữ liệu
@@ -41,8 +41,8 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 | T01 Laravel 11 + commit từng bước | PR1 + toàn bộ | ☐ |
 | T02 Docker | PR1 | ✅ |
 | T03 MySQL + seed | PR3 | ☐ |
-| T04 MongoDB | PR2 | ☐ |
-| T05 check-connections | PR2 | ☐ |
+| T04 MongoDB | PR2 | ✅ |
+| T05 check-connections | PR2 | ✅ |
 | T06 README | PR12 | ☐ |
 | T07 Schema MySQL | PR3 | ☐ |
 | T08 Collection Mongo + index | PR3 | ☐ |
