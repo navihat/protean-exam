@@ -1,5 +1,7 @@
 # Roadmap
 
+Trạng thái và hướng dẫn làm tiếp: [HANDOFF.md](HANDOFF.md).
+
 Mỗi dòng là **một nhánh + một PR**, làm theo thứ tự từ trên xuống. Tick `[x]` khi PR đã merge.
 Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 
@@ -13,8 +15,9 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
   - Xong khi: `migrate:fresh --seed` không lỗi, chạy lại seeder không nhân bản dữ liệu
 - [x] **PR4 `feat/T09-auth-roles`**: Breeze (Blade), Sanctum, `EnsureUserHasRole`, register luôn là student, API login token
   - Test: student vào `/admin/*` bị 403, guest bị redirect hoặc 401
-- [ ] **PR5 `feat/T10-T15-admin-exam-crud`**: CRUD đề và câu hỏi (FormRequest, paginate, search), `ExamService`, Observer, event, `RecordActivity`, cache danh sách đề (T19)
-  - Test: tạo, sửa, xoá, tìm kiếm, validate lỗi; log được ghi qua Observer
+- [x] **PR5a `feat/T10-admin-exam-crud`**: CRUD đề và câu hỏi (FormRequest, paginate, search), `ExamService`, `QuestionService`, `preventLazyLoading`
+- [ ] **PR5b `feat/T15-T19-activity-log-cache`**: Observer cho exam/question, event, listener `RecordActivity`, cache danh sách đề (T19)
+  - Test: tạo, sửa, xoá đề hoặc câu hỏi đều ghi `activity_logs` qua Observer; cache danh sách đề bị xoá khi đề thay đổi
 - [ ] **PR6 `feat/T11-T12-T16-attempt-api`**: `AttemptService::startOrResume`, `GradingService`, API exams/attempts/submit/result, Resource, xử lý lỗi tập trung, `AttemptPolicy`
   - Test bắt buộc: **chấm điểm đúng**, **nộp quá giờ**, response không lộ `is_correct`, 2 lần start ra thứ tự khác nhau, nộp 2 lần trả 409
 - [ ] **PR7 `feat/T20-autosave`**: partial unique index, autosave atomic, `remaining_seconds` tính theo server, lazy finalize
@@ -38,7 +41,7 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 
 | Task | PR | Trạng thái |
 |---|---|---|
-| T01 Laravel 11 + commit từng bước | PR1 + toàn bộ | ☐ |
+| T01 Laravel 11 + commit từng bước | PR1 + toàn bộ | ✅ (tiếp tục giữ) |
 | T02 Docker | PR1 | ✅ |
 | T03 MySQL + seed | PR3 | ✅ |
 | T04 MongoDB | PR2 | ✅ |
@@ -47,16 +50,16 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 | T07 Schema MySQL | PR3 | ✅ |
 | T08 Collection Mongo + index | PR3 | ✅ |
 | T09 Auth + role | PR4 | ✅ |
-| T10 CRUD admin | PR5 | ☐ |
+| T10 CRUD admin | PR5a | ✅ |
 | T11 Bắt đầu làm bài | PR6, PR8 | ☐ |
 | T12 Nộp + chấm | PR6 | ☐ |
 | T13 Trang kết quả | PR8 | ☐ |
 | T14 Thống kê aggregation | PR9 | ☐ |
-| T15 Activity log | PR5, PR6 | ☐ |
+| T15 Activity log | PR5b, PR6 | ☐ |
 | T16 API REST | PR6 | ☐ |
 | T17 Tổ chức code | toàn bộ | ☐ |
 | T18 ≥ 5 feature test | toàn bộ | ☐ |
-| T19 Cache + Postman | PR5, PR12 | ☐ |
+| T19 Cache + Postman | PR5b, PR12 | ☐ |
 | T20 Autosave | PR7 | ☐ |
 | T21 IELTS BE | PR10 | ☐ |
 | T22 IELTS FE | PR11 | ☐ |

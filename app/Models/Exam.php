@@ -40,9 +40,12 @@ class Exam extends Model
 
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
+        // Escape LIKE wildcards so "50%" matches literally.
+        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], trim((string) $term));
+
         return $query->when(
-            filled($term),
-            fn (Builder $query) => $query->where('name', 'like', '%'.trim($term).'%'),
+            $escaped !== '',
+            fn (Builder $query) => $query->where('name', 'like', '%'.$escaped.'%'),
         );
     }
 
