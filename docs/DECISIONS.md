@@ -1,0 +1,95 @@
+# Quyết định kỹ thuật (Decision log)
+
+Mỗi quyết định có mã `D<n>`. Trạng thái: **Đề xuất** (chờ duyệt) → **Chốt** → (có thể) **Thay thế bởi D<m>**.
+Khi code lệch khỏi một quyết định đã chốt thì phải cập nhật file này trước, trong cùng PR.
+README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
+
+| Mã | Chủ đề | Trạng thái |
+|---|---|---|
+| D1 | Laravel 11 dù đã hết hạn bảo mật | Đề xuất – **cần bạn quyết** |
+| D2 | Frontend: Blade + Alpine.js | Đề xuất |
+| D3 | Auth: Breeze (web) + Sanctum (API) | Đề xuất |
+| D4 | Phân chia MySQL / MongoDB | Đề xuất |
+| D5 | Snapshot đề thi trong attempt | Đề xuất |
+| D6 | Cách chấm điểm | Đề xuất |
+| D7 | Nộp quá giờ | Đề xuất |
+| D8 | Một attempt đang mở cho mỗi (student, đề) | Đề xuất |
+| D9 | Phạm vi phần nâng cao | Đề xuất |
+| D10 | Activity log | Đề xuất |
+| D11 | Tham chiếu chéo MySQL ↔ Mongo, xoá đề | Đề xuất |
+| D12 | Format response API | Đề xuất |
+| D13 | Xem thử tài liệu (T21) | Đề xuất |
+| D14 | Cache danh sách đề | Đề xuất |
+
+---
+
+### D1 – Laravel 11 dù đã hết hạn bảo mật
+- **Bối cảnh:** Đề bắt buộc Laravel 11. Nhánh 11.x đã hết hạn hỗ trợ bảo mật; Packagist ghi nhận advisory chưa vá trên 11.x (ví dụ CVE-2026-48019 – CRLF injection ở rule `email` mặc định). Composer 2.9+ mặc định **chặn** cài các bản có advisory.
+- **Đề xuất:** Dùng bản 11.x mới nhất. Trong `composer.json` chỉ bỏ qua **đúng các advisory ID** của `laravel/framework`, không tắt cơ chế chặn toàn cục. Ghi rõ trong README là chỉ dùng cho bài test, môi trường production phải lên 12/13.
+- **Phương án thay thế:** Dùng Laravel 12, nhưng như vậy là lệch đề.
+
+### D2 – Frontend: Blade + Alpine.js
+- Dùng Breeze (Blade stack). Riêng trang làm bài và trang gói IELTS dùng Alpine.js gọi **chính API REST** (Sanctum stateful cookie), nhờ vậy API được dùng thật chứ không chỉ để cho có, và mở xem thử không reload trang.
+- Lý do: ít công cụ build nhất, dễ giải thích khi review, không cần SPA router.
+
+### D3 – Auth: Breeze (web) + Sanctum (API)
+- Breeze lo đăng ký/đăng nhập web. Sanctum cấp token cho Postman/API và cookie auth cho Alpine.
+- Bảng `users` có cột `role` (enum PHP `UserRole`: `admin`, `student`). Đăng ký mới luôn là `student`, admin chỉ được tạo từ seeder.
+- Middleware `role:admin` chặn `/admin/*` và `/api/admin/*`, trả 403.
+
+### D4 – Phân chia MySQL / MongoDB
+| Dữ liệu | Nơi lưu | Lý do |
+|---|---|---|
+| users, exams, questions, options, packages, units, documents | MySQL | Dữ liệu gốc, quan hệ chặt, cần FK, CRUD và phân trang |
+| attempts | MongoDB | Document tự chứa (snapshot + câu trả lời), cấu trúc lồng nhau, ghi nhiều (autosave), phù hợp aggregation thống kê |
+| activity_logs, preview_logs | MongoDB | Append-only, khối lượng lớn, schema linh hoạt (`meta`), không cần join |
+
+### D5 – Snapshot đề thi trong attempt
+- Khi bắt đầu làm bài, chép câu hỏi và đáp án (kể cả `is_correct`) vào `attempts.snapshot` theo **thứ tự đã trộn**.
+- Chấm điểm và hiển thị kết quả **chỉ dựa trên snapshot**, nên admin sửa hoặc xoá đề sau đó không làm sai kết quả cũ.
+- `is_correct` **không bao giờ** được trả về cho student trước khi nộp. Việc này do một Resource riêng đảm bảo (`AttemptQuestionResource`), có test kiểm tra.
+
+### D6 – Cách chấm điểm
+- Một câu có thể có nhiều đáp án đúng. Câu chỉ được tính đúng khi tập đáp án chọn **trùng khít** tập đáp án đúng (đúng hết mới được điểm).
+- Lưu `correct_count`, `total_questions` và `score = round(correct_count / total * 10, 2)` (thang 10).
+- Mỗi câu lưu `is_correct` trong `results[]` để thống kê "câu sai nhiều nhất" bằng aggregation.
+
+### D7 – Nộp quá giờ
+- `expires_at = started_at + duration`. Có thời gian ân hạn `config('exam.submit_grace_seconds')` = 30 giây cho độ trễ mạng.
+- Nộp **trong hạn**: lấy câu trả lời từ request gộp với phần đã autosave rồi chấm. Trả **200**.
+- Nộp **sau hạn**: bỏ qua câu trả lời trong request, chỉ chấm **phần đã autosave trước hạn**, đánh dấu `is_late = true`. Trả **200** kèm cờ `is_late`.
+- Attempt đã nộp mà gửi lại thì trả **409** `ATTEMPT_ALREADY_SUBMITTED`.
+- Mở lại một attempt đã hết giờ mà chưa nộp thì hệ thống tự chốt và chấm (lazy finalize).
+
+### D8 – Một attempt đang mở cho mỗi (student, đề)
+- Mongo có **partial unique index** trên `{user_id, exam_id}` với điều kiện `status = "in_progress"`, nên DB tự chặn race condition (bấm đúp, mở 2 tab).
+- Gọi "bắt đầu" khi đang có attempt mở thì trả về attempt đó (**200**), tạo mới thì trả **201**. Nếu insert bị lỗi duplicate key thì đọc lại attempt đang mở và trả về.
+
+### D9 – Phạm vi phần nâng cao
+- Bắt buộc làm: **T20** (autosave), vì nó nối tiếp core và giải quyết luôn D7.
+- Tiếp theo: **T21** (backend gói IELTS), phù hợp vị trí BE.
+- Nếu còn thời gian: **T22** (frontend).
+
+### D10 – Activity log
+- Domain event (`AttemptStarted`, `AttemptSubmitted`, `DocumentPreviewed`…), event có sẵn của Laravel (`Login`, `Logout`, `Registered`) và Observer (`ExamObserver`, `QuestionObserver`) đều đổ về listener `RecordActivity`, listener này ghi `activity_logs`.
+- Listener chạy đồng bộ (`QUEUE_CONNECTION=sync`) cho đơn giản. Muốn chuyển sang queue thì chỉ cần `implements ShouldQueue`.
+
+### D11 – Tham chiếu chéo MySQL ↔ Mongo, xoá đề
+- Mongo lưu `user_id`, `exam_id`, `question_id` dạng **int** (id MySQL). Không có FK chéo DB.
+- `exams` dùng **SoftDeletes**, để thống kê và lịch sử vẫn lấy được tên đề. Question và option xoá cứng, vì snapshot đã giữ dữ liệu cũ.
+- Khi cần ghép tên (thống kê), lấy id từ aggregation rồi gọi **một** truy vấn `whereIn` vào MySQL.
+
+### D12 – Format response API
+- Thành công: API Resource với khung `{ "data": ..., "meta"?: ..., "links"?: ... }`.
+- Lỗi: `{ "message": string, "code": string, "errors"?: object }`, được chuẩn hoá ở `bootstrap/app.php` cho route `api/*`. Chi tiết xem [API_CONTRACT.md](API_CONTRACT.md).
+
+### D13 – Xem thử tài liệu (T21)
+- File gốc nằm trong disk `local` (`storage/app/private/documents/...`), không có symlink public.
+- `POST /api/documents/{id}/preview` trả URL tạo bằng `URL::temporarySignedRoute` (TTL 5 phút). Route stream có middleware `signed`, nên hết hạn hoặc sai chữ ký trả **403**.
+- Bản xem thử được tạo **lazy** lần đầu rồi cache vào `storage/app/private/previews/`. PDF cắt N trang bằng `qpdf`, audio cắt N giây bằng `ffmpeg` (cả hai cài trong image `app`).
+- Rate limit `throttle:preview` là 10 request/phút theo user hoặc IP.
+- Seeder tự sinh PDF (dompdf, nội dung giả) và audio (sóng sin qua ffmpeg). Không dùng tài liệu thật.
+
+### D14 – Cache danh sách đề
+- `GET /api/exams` được cache theo khoá có **version** (`exams:v{n}:page:{p}:q:{hash}`). `ExamObserver` tăng version mỗi khi đề thay đổi.
+- Cách này chạy được với store `database`/`file` (không cần Redis hay cache tags).
