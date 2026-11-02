@@ -27,22 +27,22 @@ class QuestionController extends Controller
         return redirect()->route('admin.exams.show', $exam)->with('status', 'Đã thêm câu hỏi.');
     }
 
-    public function edit(Question $question): View
+    public function edit(Exam $exam, Question $question): View
     {
-        return view('admin.questions.edit', ['question' => $question->load('exam', 'options')]);
+        return view('admin.questions.edit', ['exam' => $exam, 'question' => $question->load('options')]);
     }
 
-    public function update(UpdateQuestionRequest $request, Question $question): RedirectResponse
+    public function update(UpdateQuestionRequest $request, Exam $exam, Question $question): RedirectResponse
     {
         $this->questions->update($question, $request->validated());
 
-        return redirect()->route('admin.exams.show', $question->exam_id)->with('status', 'Đã cập nhật câu hỏi.');
+        return redirect()->route('admin.exams.show', $exam)->with('status', 'Đã cập nhật câu hỏi.');
     }
 
-    public function destroy(Question $question): RedirectResponse
+    public function destroy(Exam $exam, Question $question): RedirectResponse
     {
         $this->questions->delete($question);
 
-        return redirect()->route('admin.exams.show', $question->exam_id)->with('status', 'Đã xoá câu hỏi.');
+        return redirect()->route('admin.exams.show', $exam)->with('status', 'Đã xoá câu hỏi.');
     }
 }

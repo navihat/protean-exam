@@ -22,10 +22,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::view('/', 'admin.dashboard')->name('dashboard');
 
     Route::resource('exams', Admin\ExamController::class);
-    // Shallow: create/store under /exams/{exam}/questions, edit/update/destroy under /questions/{question}.
+    // Nested + scoped: /exams/{exam}/questions/{question} only resolves when the question
+    // belongs to that exam, and a soft-deleted exam returns 404 for its questions too.
     Route::resource('exams.questions', Admin\QuestionController::class)
         ->except(['index', 'show'])
-        ->shallow();
+        ->scoped();
 });
 
 require __DIR__.'/auth.php';

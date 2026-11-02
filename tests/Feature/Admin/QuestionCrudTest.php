@@ -73,7 +73,7 @@ class QuestionCrudTest extends TestCase
     {
         $question = Question::factory()->for($this->exam)->withOptions(4)->create();
 
-        $this->actingAs($this->admin)->put(route('admin.questions.update', $question), [
+        $this->actingAs($this->admin)->put(route('admin.exams.questions.update', [$this->exam, $question]), [
             'content' => 'Updated?',
             'options' => [
                 ['content' => 'Yes', 'is_correct' => '1'],
@@ -91,7 +91,7 @@ class QuestionCrudTest extends TestCase
     {
         $question = Question::factory()->for($this->exam)->withOptions()->create();
 
-        $this->actingAs($this->admin)->delete(route('admin.questions.destroy', $question))
+        $this->actingAs($this->admin)->delete(route('admin.exams.questions.destroy', [$this->exam, $question]))
             ->assertRedirect(route('admin.exams.show', $this->exam));
 
         $this->assertModelMissing($question);
@@ -102,9 +102,34 @@ class QuestionCrudTest extends TestCase
         $question = Question::factory()->for($this->exam)->withOptions()->create();
 
         $this->actingAs($this->admin)->get(route('admin.exams.questions.create', $this->exam))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.questions.edit', $question))
+        $this->actingAs($this->admin)->get(route('admin.exams.questions.edit', [$this->exam, $question]))
             ->assertOk()
             ->assertSee($question->content);
+    }
+
+    public function test_question_routes_are_scoped_to_their_exam(): void
+    {
+        $otherExam = Exam::factory()->create();
+        $question = Question::factory()->for($otherExam)->withOptions()->create();
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.exams.questions.edit', [$this->exam, $question]))
+            ->assertNotFound();
+        $this->actingAs($this->admin)
+            ->delete(route('admin.exams.questions.destroy', [$this->exam, $question]))
+            ->assertNotFound();
+
+        $this->assertModelExists($question);
+    }
+
+    public function test_questions_of_a_deleted_exam_are_not_reachable(): void
+    {
+        $question = Question::factory()->for($this->exam)->withOptions()->create();
+        $this->exam->delete();
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.exams.questions.edit', [$this->exam, $question]))
+            ->assertNotFound();
     }
 
     public function test_student_cannot_manage_questions(): void

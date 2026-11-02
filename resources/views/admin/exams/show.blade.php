@@ -25,8 +25,8 @@
                     <div class="flex items-start justify-between gap-4">
                         <p class="font-medium text-gray-900">Câu {{ $loop->iteration }}. {{ $question->content }}</p>
                         <div class="flex shrink-0 gap-3 text-sm">
-                            <a href="{{ route('admin.questions.edit', $question) }}" class="text-gray-700 hover:underline">Sửa</a>
-                            <form method="POST" action="{{ route('admin.questions.destroy', $question) }}" onsubmit="return confirm('Xoá câu hỏi này?')">
+                            <a href="{{ route('admin.exams.questions.edit', [$exam, $question]) }}" class="text-gray-700 hover:underline">Sửa</a>
+                            <form method="POST" action="{{ route('admin.exams.questions.destroy', [$exam, $question]) }}" onsubmit="return confirm('Xoá câu hỏi này?')">
                                 @csrf
                                 @method('DELETE')
                                 <button class="text-red-600 hover:underline">Xoá</button>
