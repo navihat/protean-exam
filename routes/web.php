@@ -22,6 +22,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::view('/', 'admin.dashboard')->name('dashboard');
 
     Route::resource('exams', Admin\ExamController::class);
+    // Shallow: create/store under /exams/{exam}/questions, edit/update/destroy under /questions/{question}.
+    Route::resource('exams.questions', Admin\QuestionController::class)
+        ->except(['index', 'show'])
+        ->shallow();
 });
 
 require __DIR__.'/auth.php';
