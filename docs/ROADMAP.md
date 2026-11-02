@@ -11,7 +11,7 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
   - Xong khi: command in OK cho 2 DB; có test đọc/ghi Model Mongo
 - [x] **PR3 `feat/T03-T07-T08-schema-seed`**: migration users(role), exams (soft delete), questions, options; migration index Mongo (attempts, activity_logs); enum; factory; seeder idempotent (admin, student, 2–3 đề mẫu)
   - Xong khi: `migrate:fresh --seed` không lỗi, chạy lại seeder không nhân bản dữ liệu
-- [ ] **PR4 `feat/T09-auth-roles`**: Breeze (Blade), Sanctum, `EnsureUserHasRole`, register luôn là student, API login token
+- [x] **PR4 `feat/T09-auth-roles`**: Breeze (Blade), Sanctum, `EnsureUserHasRole`, register luôn là student, API login token
   - Test: student vào `/admin/*` bị 403, guest bị redirect hoặc 401
 - [ ] **PR5 `feat/T10-T15-admin-exam-crud`**: CRUD đề và câu hỏi (FormRequest, paginate, search), `ExamService`, Observer, event, `RecordActivity`, cache danh sách đề (T19)
   - Test: tạo, sửa, xoá, tìm kiếm, validate lỗi; log được ghi qua Observer
@@ -46,7 +46,7 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 | T06 README | PR12 | ☐ |
 | T07 Schema MySQL | PR3 | ✅ |
 | T08 Collection Mongo + index | PR3 | ✅ |
-| T09 Auth + role | PR4 | ☐ |
+| T09 Auth + role | PR4 | ✅ |
 | T10 CRUD admin | PR5 | ☐ |
 | T11 Bắt đầu làm bài | PR6, PR8 | ☐ |
 | T12 Nộp + chấm | PR6 | ☐ |

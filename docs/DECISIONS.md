@@ -44,6 +44,8 @@ README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
 - Breeze lo đăng ký/đăng nhập web. Sanctum cấp token cho Postman/API và cookie auth cho Alpine.
 - Bảng `users` có cột `role` (enum PHP `UserRole`: `admin`, `student`). Đăng ký mới luôn là `student`, admin chỉ được tạo từ seeder.
 - Middleware `role:admin` chặn `/admin/*` và `/api/admin/*`, trả 403.
+- `role` **không** nằm trong `$fillable` của `User`, nên không thể gán từ request. Seeder dùng `forceFill`.
+- Code scaffold của Breeze (reset/confirm password, verify email, profile) được giữ nguyên, kể cả chỗ dùng `$request->validate()`. Đây là ngoại lệ có chủ đích với C2.1, vì đó là code chuẩn của framework và không thuộc nghiệp vụ. Riêng đăng ký đã chuyển sang `RegisterRequest`.
 
 ### D4 – Phân chia MySQL / MongoDB
 | Dữ liệu | Nơi lưu | Lý do |
