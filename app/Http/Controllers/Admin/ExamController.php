@@ -3,23 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SearchExamRequest;
 use App\Http\Requests\Admin\StoreExamRequest;
 use App\Http\Requests\Admin\UpdateExamRequest;
 use App\Models\Exam;
 use App\Services\Exam\ExamService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ExamController extends Controller
 {
     public function __construct(private readonly ExamService $exams) {}
 
-    public function index(Request $request): View
+    public function index(SearchExamRequest $request): View
     {
+        $search = $request->validated('q');
+
         return view('admin.exams.index', [
-            'exams' => $this->exams->paginateForAdmin($request->string('q')->trim()->value() ?: null),
-            'search' => $request->query('q'),
+            'exams' => $this->exams->paginateForAdmin($search),
+            'search' => $search,
         ]);
     }
 

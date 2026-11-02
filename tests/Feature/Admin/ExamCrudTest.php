@@ -46,6 +46,34 @@ class ExamCrudTest extends TestCase
         $this->assertStringContainsString('q=laravel', $response->viewData('exams')->url(2));
     }
 
+    public function test_search_rejects_non_string_query(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('admin.exams.index', ['q' => ['x']]))
+            ->assertSessionHasErrors('q');
+    }
+
+    public function test_search_treats_like_wildcards_literally(): void
+    {
+        Exam::factory()->create(['name' => 'Giảm 50% học phí']);
+        Exam::factory()->create(['name' => 'Đề 500 câu']);
+
+        $this->actingAs($this->admin)->get(route('admin.exams.index', ['q' => '50%']))
+            ->assertOk()
+            ->assertSee('Giảm 50% học phí')
+            ->assertDontSee('Đề 500 câu');
+    }
+
+    public function test_create_and_edit_forms_render(): void
+    {
+        $exam = Exam::factory()->create();
+
+        $this->actingAs($this->admin)->get(route('admin.exams.create'))->assertOk();
+        $this->actingAs($this->admin)->get(route('admin.exams.edit', $exam))
+            ->assertOk()
+            ->assertSee($exam->name);
+    }
+
     public function test_admin_can_create_an_exam(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.exams.store'), [
