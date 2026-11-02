@@ -5,7 +5,7 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 
 ## Core
 
-- [ ] **PR1 `chore/T01-T02-bootstrap-docker`**: Laravel 11 skeleton, Dockerfile (php-fpm + ext mongodb), nginx, MySQL 8, Mongo 7, entrypoint tự setup, CI workflow
+- [x] **PR1 `chore/T01-T02-bootstrap-docker`**: Laravel 11 skeleton, Dockerfile (php-fpm + ext mongodb), nginx, MySQL 8, Mongo 7, entrypoint tự setup, CI workflow
   - Xong khi: `docker compose up -d` → mở `localhost:8000` thấy trang Laravel
 - [ ] **PR2 `feat/T04-T05-mongodb-connection`**: `mongodb/laravel-mongodb`, connection `mongodb`, `app:check-connections`, trait `RefreshMongo`, phpunit dùng DB `exam_testing`
   - Xong khi: command in OK cho 2 DB; có test đọc/ghi Model Mongo
@@ -39,7 +39,7 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 | Task | PR | Trạng thái |
 |---|---|---|
 | T01 Laravel 11 + commit từng bước | PR1 + toàn bộ | ☐ |
-| T02 Docker | PR1 | ☐ |
+| T02 Docker | PR1 | ✅ |
 | T03 MySQL + seed | PR3 | ☐ |
 | T04 MongoDB | PR2 | ☐ |
 | T05 check-connections | PR2 | ☐ |
