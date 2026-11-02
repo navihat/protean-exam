@@ -8,7 +8,7 @@ Laravel 11 · PHP 8.3 · MySQL 8 · MongoDB 7 · Blade + Alpine.js · Docker
 ```bash
 git clone <repo-url> protean-exam && cd protean-exam
 docker compose up -d --build        # tự cài vendor, tạo key, migrate và seed
-# mở http://localhost:8080
+# mở http://localhost:8000
 docker compose exec app php artisan app:check-connections
 docker compose exec app php artisan test
 ```
