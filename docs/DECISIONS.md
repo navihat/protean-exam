@@ -82,7 +82,7 @@ README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
 
 ### D10 – Activity log
 - Domain event (`AttemptStarted`, `AttemptSubmitted`, `DocumentPreviewed`…), event có sẵn của Laravel (`Login`, `Logout`, `Registered`) và Observer (`ExamObserver`, `QuestionObserver`) đều đổ về listener `RecordActivity`, listener này ghi `activity_logs`.
-- Listener chạy đồng bộ (`QUEUE_CONNECTION=sync`) cho đơn giản. Muốn chuyển sang queue thì chỉ cần `implements ShouldQueue`.
+- Listener chạy đồng bộ (`QUEUE_CONNECTION=sync`) cho đơn giản. `RecordActivity` lấy user, IP và user agent từ `Request` của chính request đó. Vì vậy muốn chuyển sang queue thì `implements ShouldQueue` là **chưa đủ**: phải đưa actor/IP/user agent vào event ngay lúc dispatch, nếu không worker sẽ ghi user = null và IP của worker.
 - **Đã làm ở PR5b:**
   - Observer không ghi log trực tiếp mà dispatch event `ContentChanged(action, subjectType, subjectId, meta)`, listener `RecordActivity::handleContentChanged` ghi log. Nhờ vậy grep `ActivityLog::` chỉ ra đúng một file (C6.1).
   - Observer `implements ShouldHandleEventsAfterCommit`: chỉ chạy sau khi transaction commit, rollback thì không ghi log và không xoá cache (C6.2).
@@ -110,5 +110,5 @@ README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
 ### D14 – Cache danh sách đề
 - `GET /api/exams` được cache theo khoá có **version** (`exams:v{n}:page:{p}:q:{hash}`). `ExamObserver` tăng version mỗi khi đề thay đổi.
 - Cách này chạy được với store `database`/`file` (không cần Redis hay cache tags).
-- **Đã làm ở PR5b:** `ExamService::paginatePublished(?search, page)` (endpoint `GET /api/exams` sẽ gọi nó ở PR6). Version nằm ở key `exams:list-version`, tăng bằng `Cache::add` + `Cache::increment` (atomic). Cả `ExamObserver` và `QuestionObserver` đều tăng version, vì danh sách có `questions_count`. TTL ở `config('exam.list_cache_seconds')` = 600 giây; entry của version cũ tự hết hạn.
+- **Đã làm ở PR5b:** `ExamService::paginatePublished(?search, page)` (từ khoá được trim + `mb_strtolower` trước khi tạo key; `path` của paginator được đặt lại theo request hiện tại sau khi lấy từ cache) (endpoint `GET /api/exams` sẽ gọi nó ở PR6). Version nằm ở key `exams:list-version`, tăng bằng `Cache::add` + `Cache::increment` (atomic). Cả `ExamObserver` và `QuestionObserver` đều tăng version, vì danh sách có `questions_count`. TTL ở `config('exam.list_cache_seconds')` = 600 giây; entry của version cũ tự hết hạn.
 - Link phân trang dùng `appends(['q' => …])` thay cho `withQueryString()`, để nội dung được cache chỉ phụ thuộc vào khoá cache (ngoại lệ có chủ đích với C3.2).

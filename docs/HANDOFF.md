@@ -51,6 +51,8 @@ docker compose exec app php artisan test
 - **Vì sao `QuestionObserver` dùng `saved` chứ không phải `updated`?** Sửa chỉ đáp án thì cột của `questions` không đổi, Eloquent không bắn `updated`. `saved` luôn bắn khi gọi `save()`; bỏ qua lần `saved` của lúc tạo bằng `wasRecentlyCreated`.
 - **Cache có version thay vì xoá từng key:** không biết trước có bao nhiêu trang và từ khoá đã được cache, store `database` lại không có cache tags. Tăng version là mọi key cũ thành "mồ côi" và tự hết hạn sau TTL.
 - **Vì sao câu hỏi thay đổi cũng xoá cache đề?** Danh sách đề có `questions_count`.
+- **Mongo lỗi thì sao?** Observer chạy sau commit, nên nếu ghi `activity_logs` lỗi thì đề hoặc câu hỏi **đã được lưu** nhưng admin vẫn thấy 500. Chấp nhận cho bài test (log là một phần yêu cầu); nếu muốn "log hỏng không làm hỏng request" thì bọc `ActivityLog::create` trong `try/catch` + `report($e)`.
+- **Vì sao đặt lại `withPath()` sau khi lấy từ cache?** `paginate()` lưu path của request đầu tiên vào object được cache. Không đặt lại thì trang web và `/api/exams` sẽ dùng chung link phân trang của bên nào làm ấm cache trước (có test).
 - **Ghi log khi chạy seeder:** seeder tạo đề cũng đi qua Observer nên có log `exam.created` với `user_id = null`. Đây là hành vi đúng (không có người dùng đăng nhập).
 
 ## 4. Lưu ý kỹ thuật đã gặp
@@ -65,7 +67,7 @@ docker compose exec app php artisan test
 ## 5. Làm tiếp từ đâu
 
 PR5b xong (nhánh `feat/T15-T19-activity-log-cache`, chưa merge). Tiếp theo là **PR6** (`feat/T11-T12-T16-attempt-api`) trong `docs/ROADMAP.md`:
-- `GET /api/exams` chỉ cần gọi `ExamService::paginatePublished($q, $page)` là có cache.
+- `GET /api/exams` chỉ cần gọi `ExamService::paginatePublished($q, $page)` là có cache. FormRequest của endpoint này nên giới hạn `page: integer|min:1`, `q: nullable|string|max:100`, để người dùng không tạo ra vô số key cache.
 - Event `AttemptStarted`, `AttemptSubmitted`: thêm method `handleAttemptStarted(...)`, `handleAttemptSubmitted(...)` vào `RecordActivity`, không ghi log ở chỗ khác.
 - Postman collection (phần còn lại của T19) nằm ở PR12.
 

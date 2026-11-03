@@ -5,6 +5,7 @@ namespace App\Services\Exam;
 use App\Models\Exam;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 
 class ExamService
@@ -35,17 +36,22 @@ class ExamService
      */
     public function paginatePublished(?string $search, int $page = 1): LengthAwarePaginator
     {
-        $search = trim((string) $search);
+        // Name search is case-insensitive in MySQL, so "Laravel" and "laravel" share one entry.
+        $search = mb_strtolower(trim((string) $search));
         $key = sprintf('exams:v%d:page:%d:q:%s', $this->listVersion(), $page, md5($search));
 
-        return Cache::remember($key, config('exam.list_cache_seconds'), fn () => Exam::query()
+        $exams = Cache::remember($key, config('exam.list_cache_seconds'), fn () => Exam::query()
             ->published()
             ->search($search)
             ->withCount('questions')
             ->latest('id')
             ->paginate(self::PER_PAGE, page: $page)
-            // Not withQueryString(): the cached links must depend only on the cache key.
+            // Not withQueryString(): the cached query string must depend only on the cache key.
             ->appends(array_filter(['q' => $search])));
+
+        // The cached paginator remembers the URL path of the request that filled the cache
+        // (web page or API). Reset it so each caller gets links to its own URL.
+        return $exams->withPath(Paginator::resolveCurrentPath());
     }
 
     public function flushPublishedListCache(): void

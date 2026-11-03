@@ -4,7 +4,9 @@ namespace Tests\Feature\Exam;
 
 use App\Models\Exam;
 use App\Services\Exam\ExamService;
+use App\Services\Exam\QuestionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\RefreshMongo;
 use Tests\TestCase;
@@ -73,9 +75,11 @@ class PublishedExamListCacheTest extends TestCase
         $exam = Exam::factory()->withQuestions(1)->create(['is_published' => true]);
         $this->assertSame(1, $this->exams->paginatePublished(null)->first()->questions_count);
 
-        $exam->questions()->create(['content' => 'Câu mới', 'position' => 2]);
-
+        $question = $exam->questions()->create(['content' => 'Câu mới', 'position' => 2]);
         $this->assertSame(2, $this->exams->paginatePublished(null)->first()->questions_count);
+
+        app(QuestionService::class)->delete($question);
+        $this->assertSame(1, $this->exams->paginatePublished(null)->first()->questions_count);
     }
 
     public function test_pages_and_search_terms_are_cached_separately(): void
@@ -89,5 +93,27 @@ class PublishedExamListCacheTest extends TestCase
         $search = $this->exams->paginatePublished('laravel');
         $this->assertSame(['Laravel nâng cao'], $search->pluck('name')->all());
         $this->assertStringContainsString('q=laravel', $search->url(2));
+    }
+
+    public function test_search_terms_differing_only_in_case_share_one_entry(): void
+    {
+        $exam = Exam::factory()->create(['name' => 'Laravel', 'is_published' => true]);
+        $this->exams->paginatePublished('Laravel');
+
+        DB::table('exams')->where('id', $exam->id)->update(['name' => 'Laravel đổi lén']);
+
+        $this->assertSame('Laravel', $this->exams->paginatePublished('  LARAVEL ')->first()->name);
+    }
+
+    public function test_pagination_links_use_the_path_of_the_current_caller(): void
+    {
+        Exam::factory()->count(ExamService::PER_PAGE + 1)->create(['is_published' => true]);
+
+        Paginator::currentPathResolver(fn () => 'http://localhost/exams');
+        $this->exams->paginatePublished(null);
+
+        // A second caller (e.g. the API) hits the warm cache but must get its own links.
+        Paginator::currentPathResolver(fn () => 'http://localhost/api/exams');
+        $this->assertSame('http://localhost/api/exams?page=2', $this->exams->paginatePublished(null)->url(2));
     }
 }
