@@ -4,15 +4,18 @@ namespace App\Observers;
 
 use App\Events\ContentChanged;
 use App\Models\Exam;
+use App\Services\Exam\ExamService;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 
 /**
- * Side effects of an exam change (T15): record the activity.
- * ShouldHandleEventsAfterCommit defers this until the surrounding transaction
- * commits, so a rollback leaves no log entry (C6.2).
+ * Side effects of an exam change (T15, T19): record the activity and invalidate
+ * the cached published-exam list. ShouldHandleEventsAfterCommit defers both until
+ * the surrounding transaction commits, so a rollback leaves no log entry (C6.2).
  */
 class ExamObserver implements ShouldHandleEventsAfterCommit
 {
+    public function __construct(private readonly ExamService $exams) {}
+
     public function created(Exam $exam): void
     {
         $this->changed('exam.created', $exam, ['name' => $exam->name]);
@@ -41,6 +44,8 @@ class ExamObserver implements ShouldHandleEventsAfterCommit
      */
     private function changed(string $action, Exam $exam, array $meta): void
     {
+        $this->exams->flushPublishedListCache();
+
         ContentChanged::dispatch($action, 'exam', $exam->id, $meta);
     }
 }

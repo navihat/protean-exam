@@ -5,10 +5,13 @@ namespace App\Services\Exam;
 use App\Models\Exam;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 
 class ExamService
 {
     public const PER_PAGE = 10;
+
+    private const LIST_VERSION_KEY = 'exams:list-version';
 
     /**
      * Admin listing: every exam (draft or published), newest first, filtered by name.
@@ -21,6 +24,40 @@ class ExamService
             ->latest('id')
             ->paginate(self::PER_PAGE)
             ->withQueryString();
+    }
+
+    /**
+     * Student listing: published exams only, cached per page and search term (T19, D14).
+     *
+     * The key embeds a version number. Observers bump it on every exam or question
+     * change, so all cached pages become unreachable at once without needing cache
+     * tags (unsupported by the `database` store). Old entries expire by TTL.
+     */
+    public function paginatePublished(?string $search, int $page = 1): LengthAwarePaginator
+    {
+        $search = trim((string) $search);
+        $key = sprintf('exams:v%d:page:%d:q:%s', $this->listVersion(), $page, md5($search));
+
+        return Cache::remember($key, config('exam.list_cache_seconds'), fn () => Exam::query()
+            ->published()
+            ->search($search)
+            ->withCount('questions')
+            ->latest('id')
+            ->paginate(self::PER_PAGE, page: $page)
+            // Not withQueryString(): the cached links must depend only on the cache key.
+            ->appends(array_filter(['q' => $search])));
+    }
+
+    public function flushPublishedListCache(): void
+    {
+        // add() is a no-op when the key exists; increment() needs an existing key on the database store.
+        Cache::add(self::LIST_VERSION_KEY, 1);
+        Cache::increment(self::LIST_VERSION_KEY);
+    }
+
+    private function listVersion(): int
+    {
+        return (int) Cache::rememberForever(self::LIST_VERSION_KEY, fn () => 1);
     }
 
     /**

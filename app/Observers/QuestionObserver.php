@@ -4,13 +4,17 @@ namespace App\Observers;
 
 use App\Events\ContentChanged;
 use App\Models\Question;
+use App\Services\Exam\ExamService;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 
 /**
- * Same as ExamObserver for questions (T15).
+ * Same as ExamObserver for questions (T15, T19). The cached exam list shows
+ * `questions_count`, so a question change invalidates it too.
  */
 class QuestionObserver implements ShouldHandleEventsAfterCommit
 {
+    public function __construct(private readonly ExamService $exams) {}
+
     public function created(Question $question): void
     {
         $this->changed('question.created', $question);
@@ -35,6 +39,8 @@ class QuestionObserver implements ShouldHandleEventsAfterCommit
 
     private function changed(string $action, Question $question): void
     {
+        $this->exams->flushPublishedListCache();
+
         ContentChanged::dispatch($action, 'question', $question->id, ['exam_id' => $question->exam_id]);
     }
 }
