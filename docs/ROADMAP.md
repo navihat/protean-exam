@@ -16,7 +16,7 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 - [x] **PR4 `feat/T09-auth-roles`**: Breeze (Blade), Sanctum, `EnsureUserHasRole`, register luôn là student, API login token
   - Test: student vào `/admin/*` bị 403, guest bị redirect hoặc 401
 - [x] **PR5a `feat/T10-admin-exam-crud`**: CRUD đề và câu hỏi (FormRequest, paginate, search), `ExamService`, `QuestionService`, `preventLazyLoading`
-- [ ] **PR5b `feat/T15-T19-activity-log-cache`**: Observer cho exam/question, event, listener `RecordActivity`, cache danh sách đề (T19)
+- [x] **PR5b `feat/T15-T19-activity-log-cache`**: Observer cho exam/question, event, listener `RecordActivity`, cache danh sách đề (T19)
   - Test: tạo, sửa, xoá đề hoặc câu hỏi đều ghi `activity_logs` qua Observer; cache danh sách đề bị xoá khi đề thay đổi
 - [ ] **PR6 `feat/T11-T12-T16-attempt-api`**: `AttemptService::startOrResume`, `GradingService`, API exams/attempts/submit/result, Resource, xử lý lỗi tập trung, `AttemptPolicy`
   - Test bắt buộc: **chấm điểm đúng**, **nộp quá giờ**, response không lộ `is_correct`, 2 lần start ra thứ tự khác nhau, nộp 2 lần trả 409
@@ -55,11 +55,11 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 | T12 Nộp + chấm | PR6 | ☐ |
 | T13 Trang kết quả | PR8 | ☐ |
 | T14 Thống kê aggregation | PR9 | ☐ |
-| T15 Activity log | PR5b, PR6 | ☐ |
+| T15 Activity log | PR5b, PR6 | ◐ exam/question/auth xong; attempt ở PR6 |
 | T16 API REST | PR6 | ☐ |
 | T17 Tổ chức code | toàn bộ | ☐ |
 | T18 ≥ 5 feature test | toàn bộ | ☐ |
-| T19 Cache + Postman | PR5b, PR12 | ☐ |
+| T19 Cache + Postman | PR5b, PR12 | ◐ cache xong; Postman ở PR12 |
 | T20 Autosave | PR7 | ☐ |
 | T21 IELTS BE | PR10 | ☐ |
 | T22 IELTS FE | PR11 | ☐ |

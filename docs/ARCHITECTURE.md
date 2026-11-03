@@ -30,6 +30,7 @@ app/
 │   ├── AttemptStatus.php               # in_progress | submitted
 │   └── DocumentType.php                # pdf | audio            (T21)
 ├── Events/                             # T15  domain events
+│   ├── ContentChanged.php              # exam/question created|updated|deleted (từ Observer)
 │   ├── AttemptStarted.php
 │   ├── AttemptSubmitted.php
 │   └── DocumentPreviewed.php           # (T21)
@@ -88,7 +89,7 @@ app/
     ├── Package/DocumentPreviewService.php        # T21 signed URL + cắt file
     └── Statistics/PreviewStatisticsService.php   # T21
 
-config/exam.php                         # duration mặc định, grace seconds, cache ttl
+config/exam.php                         # list_cache_seconds (T19); grace seconds sẽ thêm ở PR6
 database/
 ├── migrations/                         # MySQL + migration tạo index Mongo
 ├── factories/
@@ -132,6 +133,15 @@ PUT /api/attempts/{attempt}/answers/{questionId}   body: {option_ids: [..]}
        {_id, user_id, status: in_progress, expires_at > now},
        {$set: {"answers.{qid}": [...], updated_at}})
      matched = 0 → 409 ATTEMPT_CLOSED
+```
+
+### Activity log và cache danh sách đề (T15, T19)
+```
+Admin sửa đề/câu hỏi → ExamService / QuestionService → Eloquent save/delete
+ └ ExamObserver / QuestionObserver   (chạy SAU khi transaction commit)
+     ├ ExamService::flushPublishedListCache()  → tăng exams:list-version
+     └ ContentChanged::dispatch(...)  → RecordActivity → activity_logs
+Login / Logout / Registered (web, và token API qua TokenAuthService) → RecordActivity
 ```
 
 ### Nộp bài (T12)
