@@ -104,9 +104,11 @@ class AttemptService
     private function close(Attempt $attempt, array $requestAnswers): bool
     {
         $now = now();
+        $isLate = $now->greaterThan($attempt->expires_at->copy()->addSeconds(config('exam.submit_grace_seconds')));
         $saved = $attempt->answers ?? [];
 
-        $answers = array_replace($saved, array_map(fn (array $ids) => array_map('intval', $ids), $requestAnswers));
+        // Late: the request is ignored, only answers saved before the deadline count (D7).
+        $answers = $isLate ? $saved : array_replace($saved, array_map(fn (array $ids) => array_map('intval', $ids), $requestAnswers));
         $answers = Arr::only($answers, array_column($attempt->snapshot, 'question_id'));
 
         $grade = $this->grading->grade($attempt->snapshot, $answers);
@@ -121,6 +123,7 @@ class AttemptService
                 'correct_count' => $grade['correct_count'],
                 'total_questions' => $grade['total_questions'],
                 'score' => $grade['score'],
+                'is_late' => $isLate,
                 'submitted_at' => $now,
             ]);
 

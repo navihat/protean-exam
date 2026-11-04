@@ -71,6 +71,7 @@ class SubmitAttemptTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('data.status', 'submitted')
+            ->assertJsonPath('data.is_late', false)
             ->assertJsonPath('data.correct_count', 3)
             ->assertJsonPath('data.total_questions', 4)
             ->assertJsonPath('data.score', 7.5);
@@ -79,6 +80,36 @@ class SubmitAttemptTest extends TestCase
         $this->assertSame(AttemptStatus::Submitted, $attempt->status);
         $this->assertSame(7.5, $attempt->score);
         $this->assertCount(4, $attempt->results);
+    }
+
+    public function test_late_submission_ignores_request_and_grades_saved_answers_only(): void
+    {
+        $id = $this->start();
+        $first = array_key_first($this->correct);
+
+        // What autosave (T20) would have stored before the deadline: one correct answer.
+        Attempt::query()->whereKey($id)->update(['answers' => [$first => [$this->correct[$first]]]]);
+
+        // 15 minutes plus a 30 second grace period, then one more second.
+        $this->travel(15 * 60 + 31)->seconds();
+
+        $this->postJson(route('api.attempts.submit', $id), ['answers' => $this->answers(4)])
+            ->assertOk()
+            ->assertJsonPath('data.is_late', true)
+            ->assertJsonPath('data.correct_count', 1)
+            ->assertJsonPath('data.score', 2.5);
+    }
+
+    public function test_submission_inside_grace_period_is_on_time(): void
+    {
+        $id = $this->start();
+
+        $this->travel(15 * 60 + 20)->seconds();
+
+        $this->postJson(route('api.attempts.submit', $id), ['answers' => $this->answers(4)])
+            ->assertOk()
+            ->assertJsonPath('data.is_late', false)
+            ->assertJsonPath('data.score', 10);
     }
 
     public function test_submitting_twice_returns_409(): void

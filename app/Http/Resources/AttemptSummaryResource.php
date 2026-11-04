@@ -18,6 +18,7 @@ class AttemptSummaryResource extends JsonResource
         return [
             'id' => $this->id,
             'status' => $this->status->value,
+            'is_late' => $this->is_late,
             'score' => $this->score,
             'correct_count' => $this->correct_count,
             'total_questions' => $this->total_questions,
