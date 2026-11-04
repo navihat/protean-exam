@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AttemptController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ExamController;
 use Illuminate\Support\Facades\Route;
@@ -15,5 +16,6 @@ Route::name('api.')->group(function () {
 
         Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
         Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
+        Route::post('/exams/{exam}/attempts', [AttemptController::class, 'store'])->name('attempts.store');
     });
 });
