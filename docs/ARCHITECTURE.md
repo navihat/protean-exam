@@ -191,7 +191,8 @@ documents  id, unit_id → units (cascade), title, type (pdf|audio), file_path (
 //        {user_id:1, exam_id:1} unique partial {status:"in_progress"}
 
 // activity_logs
-{ _id, user_id, action: "attempt.submitted", subject_type: "attempt", subject_id, meta: {…}, ip, user_agent, created_at }
+{ _id, user_id, action: "attempt.submitted", subject_type: "exam", subject_id: 3, meta: { attempt_id: "6725f0…", score, is_late }, ip, user_agent, created_at }
+// subject_id luôn là id MySQL kiểu int (C4.2); id Mongo của attempt nằm trong meta
 // index: {user_id:1}, {action:1}, {created_at:-1}
 
 // preview_logs (T21)
