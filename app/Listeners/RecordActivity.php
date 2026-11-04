@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\AttemptStarted;
+use App\Events\AttemptSubmitted;
 use App\Events\ContentChanged;
 use App\Models\Mongo\ActivityLog;
 use Illuminate\Auth\Events\Login;
@@ -36,6 +37,17 @@ class RecordActivity
         $attempt = $event->attempt;
 
         $this->record('attempt.started', $attempt->user_id, 'exam', $attempt->exam_id, ['attempt_id' => $attempt->id]);
+    }
+
+    public function handleAttemptSubmitted(AttemptSubmitted $event): void
+    {
+        $attempt = $event->attempt;
+
+        $this->record('attempt.submitted', $attempt->user_id, 'exam', $attempt->exam_id, [
+            'attempt_id' => $attempt->id,
+            'score' => $attempt->score,
+            'is_late' => $attempt->is_late,
+        ]);
     }
 
     public function handleLogin(Login $event): void

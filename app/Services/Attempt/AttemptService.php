@@ -4,6 +4,7 @@ namespace App\Services\Attempt;
 
 use App\Enums\AttemptStatus;
 use App\Events\AttemptStarted;
+use App\Events\AttemptSubmitted;
 use App\Exceptions\AttemptAlreadySubmittedException;
 use App\Exceptions\ExamNotAvailableException;
 use App\Models\Exam;
@@ -137,6 +138,8 @@ class AttemptService
         }
 
         $attempt->refresh();
+
+        AttemptSubmitted::dispatch($attempt);
 
         return true;
     }

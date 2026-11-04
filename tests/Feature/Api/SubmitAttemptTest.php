@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Enums\AttemptStatus;
 use App\Exceptions\AttemptAlreadySubmittedException;
 use App\Models\Exam;
+use App\Models\Mongo\ActivityLog;
 use App\Models\Mongo\Attempt;
 use App\Models\Option;
 use App\Models\User;
@@ -141,6 +142,7 @@ class SubmitAttemptTest extends TestCase
         }
 
         $this->assertSame(10.0, Attempt::find($id)->score);
+        $this->assertSame(1, ActivityLog::where('action', 'attempt.submitted')->count());
     }
 
     public function test_other_student_cannot_submit(): void
@@ -165,5 +167,18 @@ class SubmitAttemptTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('code', 'VALIDATION_FAILED')
             ->assertJsonValidationErrors("answers.{$first}.0");
+    }
+
+    public function test_submission_is_recorded_in_activity_log(): void
+    {
+        $id = $this->start();
+        $this->postJson(route('api.attempts.submit', $id), ['answers' => $this->answers(2)])->assertOk();
+
+        $log = ActivityLog::where('action', 'attempt.submitted')->sole();
+        $this->assertSame($this->student->id, $log->user_id);
+        $this->assertSame($this->exam->id, $log->subject_id);
+        $this->assertSame($id, $log->meta['attempt_id']);
+        $this->assertEquals(5, $log->meta['score']);
+        $this->assertFalse($log->meta['is_late']);
     }
 }
