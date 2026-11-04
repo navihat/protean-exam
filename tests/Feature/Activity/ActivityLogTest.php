@@ -144,4 +144,35 @@ class ActivityLogTest extends TestCase
         $this->assertSame(2, ActivityLog::where('action', 'auth.login')->where('user_id', $user->id)->count());
         $this->assertSame($user->id, ActivityLog::where('action', 'auth.logout')->sole()->user_id);
     }
+
+    public function test_api_token_login_and_logout_are_recorded(): void
+    {
+        $user = User::factory()->create(['email' => 'api@example.com']);
+
+        $token = $this->postJson(route('api.auth.login'), [
+            'email' => 'api@example.com',
+            'password' => 'password',
+            'device_name' => 'postman',
+        ])->json('data.token');
+
+        $this->withToken($token)->postJson(route('api.auth.logout'))->assertNoContent();
+
+        $login = ActivityLog::where('action', 'auth.login')->sole();
+        $this->assertSame($user->id, $login->user_id);
+        $this->assertSame('sanctum', $login->meta['guard']);
+        $this->assertSame($user->id, ActivityLog::where('action', 'auth.logout')->sole()->user_id);
+    }
+
+    public function test_failed_api_login_records_nothing(): void
+    {
+        User::factory()->create(['email' => 'api@example.com']);
+
+        $this->postJson(route('api.auth.login'), [
+            'email' => 'api@example.com',
+            'password' => 'wrong',
+            'device_name' => 'postman',
+        ])->assertUnprocessable();
+
+        $this->assertSame(0, ActivityLog::count());
+    }
 }
