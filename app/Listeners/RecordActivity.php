@@ -4,6 +4,9 @@ namespace App\Listeners;
 
 use App\Events\ContentChanged;
 use App\Models\Mongo\ActivityLog;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 
 /**
@@ -20,6 +23,27 @@ class RecordActivity
     public function handleContentChanged(ContentChanged $event): void
     {
         $this->record($event->action, $this->request->user()?->getAuthIdentifier(), $event->subjectType, $event->subjectId, $event->meta);
+    }
+
+    public function handleLogin(Login $event): void
+    {
+        $userId = $event->user->getAuthIdentifier();
+
+        $this->record('auth.login', $userId, 'user', $userId, ['guard' => $event->guard]);
+    }
+
+    public function handleLogout(Logout $event): void
+    {
+        $userId = $event->user?->getAuthIdentifier();
+
+        $this->record('auth.logout', $userId, 'user', $userId, ['guard' => $event->guard]);
+    }
+
+    public function handleRegistered(Registered $event): void
+    {
+        $userId = $event->user->getAuthIdentifier();
+
+        $this->record('auth.registered', $userId, 'user', $userId);
     }
 
     /**

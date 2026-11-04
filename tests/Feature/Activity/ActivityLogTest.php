@@ -125,4 +125,23 @@ class ActivityLogTest extends TestCase
         $this->assertSame(0, Question::count());
         $this->assertSame(0, ActivityLog::count());
     }
+
+    public function test_web_register_login_and_logout_are_recorded(): void
+    {
+        $this->post(route('register'), [
+            'name' => 'Học sinh',
+            'email' => 'hs@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+        $user = User::firstWhere('email', 'hs@example.com');
+
+        $this->post(route('logout'));
+        $this->post(route('login'), ['email' => 'hs@example.com', 'password' => 'password']);
+
+        $this->assertSame($user->id, ActivityLog::where('action', 'auth.registered')->sole()->user_id);
+        // Registration logs the user in, then the explicit login: two entries.
+        $this->assertSame(2, ActivityLog::where('action', 'auth.login')->where('user_id', $user->id)->count());
+        $this->assertSame($user->id, ActivityLog::where('action', 'auth.logout')->sole()->user_id);
+    }
 }
