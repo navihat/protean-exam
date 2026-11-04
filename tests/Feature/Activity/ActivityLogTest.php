@@ -4,8 +4,11 @@ namespace Tests\Feature\Activity;
 
 use App\Models\Exam;
 use App\Models\Mongo\ActivityLog;
+use App\Models\Question;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Tests\Concerns\RefreshMongo;
 use Tests\TestCase;
 
@@ -71,5 +74,55 @@ class ActivityLogTest extends TestCase
         $this->actingAs($this->admin)->delete(route('admin.exams.destroy', $exam));
 
         $this->assertSame($exam->id, ActivityLog::where('action', 'exam.deleted')->sole()->subject_id);
+    }
+
+    public function test_question_create_update_and_delete_are_recorded(): void
+    {
+        $exam = Exam::factory()->create();
+        $options = [
+            ['content' => 'A', 'is_correct' => '1'],
+            ['content' => 'B', 'is_correct' => '0'],
+        ];
+
+        $this->actingAs($this->admin)->post(route('admin.exams.questions.store', $exam), [
+            'content' => 'Câu 1',
+            'options' => $options,
+        ]);
+        $question = $exam->questions()->sole();
+
+        // Only the options change: the question row itself must still count as updated.
+        $options[1]['content'] = 'B sửa';
+        $this->actingAs($this->admin)->put(route('admin.exams.questions.update', [$exam, $question]), [
+            'content' => 'Câu 1',
+            'options' => $options,
+        ]);
+
+        $this->actingAs($this->admin)->delete(route('admin.exams.questions.destroy', [$exam, $question]));
+
+        foreach (['question.created', 'question.updated', 'question.deleted'] as $action) {
+            $log = ActivityLog::where('action', $action)->sole();
+            $this->assertSame($question->id, $log->subject_id, $action);
+            $this->assertSame($exam->id, $log->meta['exam_id'], $action);
+            $this->assertSame($this->admin->id, $log->user_id, $action);
+        }
+    }
+
+    public function test_nothing_is_recorded_when_the_transaction_rolls_back(): void
+    {
+        $exam = Exam::factory()->create();
+        ActivityLog::query()->delete();
+
+        try {
+            DB::transaction(function () use ($exam) {
+                $exam->questions()->create(['content' => 'Sẽ bị rollback', 'position' => 1]);
+
+                throw new RuntimeException('options failed');
+            });
+        } catch (RuntimeException) {
+            // expected
+        }
+
+        $this->assertSame(0, Question::count());
+        $this->assertSame(0, ActivityLog::count());
     }
 }
