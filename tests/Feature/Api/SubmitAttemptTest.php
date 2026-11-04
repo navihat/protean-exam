@@ -75,7 +75,8 @@ class SubmitAttemptTest extends TestCase
             ->assertJsonPath('data.is_late', false)
             ->assertJsonPath('data.correct_count', 3)
             ->assertJsonPath('data.total_questions', 4)
-            ->assertJsonPath('data.score', 7.5);
+            ->assertJsonPath('data.score', 7.5)
+            ->assertJsonPath('data.result_url', "/api/attempts/{$id}/result");
 
         $attempt = Attempt::find($id);
         $this->assertSame(AttemptStatus::Submitted, $attempt->status);
@@ -167,6 +168,31 @@ class SubmitAttemptTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('code', 'VALIDATION_FAILED')
             ->assertJsonValidationErrors("answers.{$first}.0");
+    }
+
+    public function test_result_is_available_only_after_submission(): void
+    {
+        $id = $this->start();
+
+        $this->getJson(route('api.attempts.result', $id))
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'ATTEMPT_NOT_SUBMITTED');
+
+        $answers = $this->answers(3);
+        $this->postJson(route('api.attempts.submit', $id), ['answers' => $answers])->assertOk();
+
+        $questions = collect($this->getJson(route('api.attempts.result', $id))
+            ->assertOk()
+            ->assertJsonPath('data.score', 7.5)
+            ->json('data.questions'))->keyBy('question_id');
+
+        foreach ($this->correct as $questionId => $optionId) {
+            $question = $questions[$questionId];
+            $this->assertSame([$optionId], $question['correct_option_ids']);
+            $this->assertSame($answers[$questionId], $question['selected_option_ids']);
+            $this->assertSame($answers[$questionId] === [$optionId], $question['is_correct']);
+            $this->assertCount(4, $question['options']);
+        }
     }
 
     public function test_submission_is_recorded_in_activity_log(): void

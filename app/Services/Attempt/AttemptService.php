@@ -6,6 +6,7 @@ use App\Enums\AttemptStatus;
 use App\Events\AttemptStarted;
 use App\Events\AttemptSubmitted;
 use App\Exceptions\AttemptAlreadySubmittedException;
+use App\Exceptions\AttemptNotSubmittedException;
 use App\Exceptions\ExamNotAvailableException;
 use App\Models\Exam;
 use App\Models\Mongo\Attempt;
@@ -49,6 +50,15 @@ class AttemptService
     {
         if ($attempt->status === AttemptStatus::Submitted || ! $this->close($attempt, $answers)) {
             throw new AttemptAlreadySubmittedException;
+        }
+
+        return $attempt;
+    }
+
+    public function result(Attempt $attempt): Attempt
+    {
+        if ($attempt->status !== AttemptStatus::Submitted) {
+            throw new AttemptNotSubmittedException;
         }
 
         return $attempt;

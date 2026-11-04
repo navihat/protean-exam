@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Response of a submission: the score.
+ * Response of a submission: the score and where to read the full result.
  *
  * @mixin Attempt
  */
@@ -23,6 +23,7 @@ class AttemptSummaryResource extends JsonResource
             'correct_count' => $this->correct_count,
             'total_questions' => $this->total_questions,
             'submitted_at' => $this->submitted_at->toIso8601ZuluString(),
+            'result_url' => route('api.attempts.result', $this->id, false),
         ];
     }
 }

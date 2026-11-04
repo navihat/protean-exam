@@ -24,5 +24,8 @@ Route::name('api.')->group(function () {
         Route::post('/attempts/{attempt}/submit', [AttemptController::class, 'submit'])
             ->middleware('can:submit,attempt')
             ->name('attempts.submit');
+        Route::get('/attempts/{attempt}/result', [AttemptController::class, 'result'])
+            ->middleware('can:view,attempt')
+            ->name('attempts.result');
     });
 });
