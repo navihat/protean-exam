@@ -48,7 +48,8 @@ class ExamService
             ->latest('id')
             ->paginate(self::PER_PAGE, page: $page)
             // Not withQueryString(): the cached query string must depend only on the cache key.
-            ->appends(array_filter(['q' => $search])));
+            // Not array_filter(): it would also drop the search term "0".
+            ->appends($search === '' ? [] : ['q' => $search]));
 
         // The cached paginator remembers the URL path of the request that filled the cache
         // (web page or API). Reset it so each caller gets links to its own URL.

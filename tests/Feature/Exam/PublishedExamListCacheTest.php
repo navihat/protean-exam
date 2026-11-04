@@ -95,6 +95,13 @@ class PublishedExamListCacheTest extends TestCase
         $this->assertStringContainsString('q=laravel', $search->url(2));
     }
 
+    public function test_search_term_zero_is_kept_in_pagination_links(): void
+    {
+        Exam::factory()->count(ExamService::PER_PAGE + 1)->create(['name' => 'Đề 0', 'is_published' => true]);
+
+        $this->assertStringContainsString('q=0', $this->exams->paginatePublished('0')->url(2));
+    }
+
     public function test_search_terms_differing_only_in_case_share_one_entry(): void
     {
         $exam = Exam::factory()->create(['name' => 'Laravel', 'is_published' => true]);
