@@ -41,6 +41,7 @@
 | 404 | `NOT_FOUND` | Không tìm thấy resource |
 | 409 | `ATTEMPT_ALREADY_SUBMITTED` | Nộp lại attempt đã nộp |
 | 409 | `ATTEMPT_CLOSED` | Autosave khi attempt đã hết giờ hoặc đã nộp |
+| 409 | `ATTEMPT_NOT_SUBMITTED` | Xem kết quả khi attempt chưa nộp |
 | 422 | `VALIDATION_FAILED` | Input sai |
 | 422 | `EXAM_NOT_AVAILABLE` | Đề chưa publish hoặc không có câu hỏi |
 | 429 | `TOO_MANY_REQUESTS` | Vượt rate limit (preview) |
@@ -58,12 +59,14 @@
 | Method | Path | Mô tả | Status |
 |---|---|---|---|
 | GET | `/api/exams?q=&page=` | Danh sách đề đã publish (cache, T19) | 200 |
-| GET | `/api/exams/{exam}` | Chi tiết đề (không có câu hỏi) | 200 |
+| GET | `/api/exams/{exam}` | Chi tiết đề (không có câu hỏi), đề nháp trả 404 | 200 / 404 |
 | POST | `/api/exams/{exam}/attempts` | Bắt đầu, hoặc trả về attempt đang mở | 201 / 200 |
 | GET | `/api/attempts/{attempt}` | Câu hỏi đã trộn, đáp án đã lưu, `remaining_seconds` | 200 |
 | PUT | `/api/attempts/{attempt}/answers/{questionId}` | Autosave `{option_ids: [int]}` | 200 / 409 |
 | POST | `/api/attempts/{attempt}/submit` | Nộp `{answers?: {"<qid>": [int]}}` | 200 / 409 |
 | GET | `/api/attempts/{attempt}/result` | Kết quả, câu sai, đáp án đúng | 200 / 409 nếu chưa nộp |
+
+Các route `/api/attempts/{attempt}…` trả **403** nếu attempt không thuộc user hiện tại (`AttemptPolicy`), **404** nếu id không tồn tại.
 
 **`GET /api/attempts/{id}`** (đang làm, **không có `is_correct`**)
 ```json
