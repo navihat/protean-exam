@@ -24,7 +24,7 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
   - Test: autosave rồi đọc lại còn đáp án; start lần 2 trả attempt cũ; không có 2 attempt in_progress; autosave sau giờ trả 409
 - [ ] **PR8 `feat/T11-T13-student-ui`**: trang danh sách đề, trang làm bài (Alpine: đồng hồ, autosave, nộp), trang kết quả
 - [ ] **PR9 `feat/T14-admin-statistics`**: `ExamStatisticsService` (3 pipeline aggregation), trang và API thống kê
-  - Test: seed dữ liệu attempt đã biết trước → số liệu trả về khớp
+  - Test: seed dữ liệu attempt đã biết trước → số liệu trả về khớp; attempt của admin không được tính (D3)
 
 ## Nâng cao
 

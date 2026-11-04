@@ -44,6 +44,7 @@ README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
 - Breeze lo đăng ký/đăng nhập web. Sanctum cấp token cho Postman/API và cookie auth cho Alpine.
 - Bảng `users` có cột `role` (enum PHP `UserRole`: `admin`, `student`). Đăng ký mới luôn là `student`, admin chỉ được tạo từ seeder.
 - Middleware `role:admin` chặn `/admin/*` và `/api/admin/*`, trả 403.
+- **Admin cũng làm bài được (chốt 04/11/2026):** route làm bài (`/api/exams/{exam}/attempts`, `/api/attempts/*`) chỉ yêu cầu đăng nhập, không chặn theo role, để admin tự thử đề vừa soạn. Hệ quả: thống kê T14 (điểm TB theo đề, top 10 học sinh, câu sai nhiều nhất) phải **bỏ attempt của admin**. Admin chỉ được tạo từ seeder nên rất ít: lấy id của họ bằng một truy vấn MySQL rồi thêm `$match: {user_id: {$nin: adminIds}}` vào đầu pipeline (C4.3). Đã loại phương án thêm `role:student` vào route.
 - `role` **không** nằm trong `$fillable` của `User`, nên không thể gán từ request. Seeder dùng `forceFill`.
 - Code scaffold của Breeze (reset/confirm password, verify email, profile) được giữ nguyên, kể cả chỗ dùng `$request->validate()`. Đây là ngoại lệ có chủ đích với C2.1, vì đó là code chuẩn của framework và không thuộc nghiệp vụ. Riêng đăng ký đã chuyển sang `RegisterRequest`.
 
