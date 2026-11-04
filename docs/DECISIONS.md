@@ -70,10 +70,12 @@ README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
 - Nộp **sau hạn**: bỏ qua câu trả lời trong request, chỉ chấm **phần đã autosave trước hạn**, đánh dấu `is_late = true`. Trả **200** kèm cờ `is_late`.
 - Attempt đã nộp mà gửi lại thì trả **409** `ATTEMPT_ALREADY_SUBMITTED`.
 - Mở lại một attempt đã hết giờ mà chưa nộp thì hệ thống tự chốt và chấm (lazy finalize).
+- **Đã làm ở PR6:** `AttemptService::submit` và việc chốt attempt hết giờ khi student bấm "bắt đầu" lại dùng chung một hàm `close()`: chấm bằng `GradingService` rồi gọi `update()` với điều kiện `_id` + `status = in_progress`. Đây là một lệnh duy nhất, atomic trên document (driver gửi `updateMany`, nhưng filter `_id` chỉ khớp một document). Nếu không cập nhật được document nào thì attempt đã bị request khác nộp trước, trả 409. Phần lazy finalize khi **đọc** attempt (`GET /api/attempts/{id}`) để lại PR7.
 
 ### D8 – Một attempt đang mở cho mỗi (student, đề)
 - Mongo có **partial unique index** trên `{user_id, exam_id}` với điều kiện `status = "in_progress"`, nên DB tự chặn race condition (bấm đúp, mở 2 tab).
 - Gọi "bắt đầu" khi đang có attempt mở thì trả về attempt đó (**200**), tạo mới thì trả **201**. Nếu insert bị lỗi duplicate key thì đọc lại attempt đang mở và trả về.
+- **Đã làm ở PR6:** tìm attempt đang mở rồi trả về (200) hoặc tạo mới (201; `JsonResource` tự trả 201 khi model có `wasRecentlyCreated`). **Chưa có** partial unique index nên hai request "bắt đầu" đồng thời vẫn có thể tạo hai attempt; index và xử lý duplicate key thuộc PR7.
 
 ### D9 – Phạm vi phần nâng cao
 - Bắt buộc làm: **T20** (autosave), vì nó nối tiếp core và giải quyết luôn D7.
@@ -89,7 +91,8 @@ README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
   - `QuestionObserver` dùng event `saved` thay vì `updated`, vì sửa chỉ đáp án thì dòng `questions` không đổi cột nào nên Eloquent không bắn `updated`.
   - `RecordActivity` được Laravel tự đăng ký (event discovery theo type hint của các method `handle*`), xem bằng `php artisan event:list`.
   - Login bằng token API không đi qua session guard nên `TokenAuthService` tự dispatch `Login`/`Logout` (guard `sanctum`).
-  - Action đã có: `exam.created|updated|deleted`, `question.created|updated|deleted`, `auth.registered|login|logout`. `attempt.*` thuộc PR6.
+  - Action đã có: `exam.created|updated|deleted`, `question.created|updated|deleted`, `auth.registered|login|logout`.
+- **Đã làm ở PR6:** `attempt.started`, `attempt.submitted` từ event `AttemptStarted`, `AttemptSubmitted`. `subject_type = exam`, `subject_id = exam_id` để `subject_id` luôn là id MySQL kiểu int (C4.2); id Mongo của attempt nằm trong `meta.attempt_id` (kèm `score`, `is_late` khi nộp). `user_id` lấy từ attempt chứ không từ request, vì attempt hết giờ có thể được chốt trong lúc chủ của nó bắt đầu lại đề.
 
 ### D11 – Tham chiếu chéo MySQL ↔ Mongo, xoá đề
 - Mongo lưu `user_id`, `exam_id`, `question_id` dạng **int** (id MySQL). Không có FK chéo DB.
@@ -99,6 +102,7 @@ README tóm tắt lại các quyết định quan trọng (yêu cầu T06).
 ### D12 – Format response API
 - Thành công: API Resource với khung `{ "data": ..., "meta"?: ..., "links"?: ... }`.
 - Lỗi: `{ "message": string, "code": string, "errors"?: object }`, được chuẩn hoá ở `bootstrap/app.php` cho route `api/*`. Chi tiết xem [API_CONTRACT.md](API_CONTRACT.md).
+- **Đã làm ở PR6:** `bootstrap/app.php` có 4 render callback, chỉ áp dụng cho `api/*` (trang web giữ nguyên trang lỗi của Laravel): `DomainException` (mã và status do từng exception khai báo), `ValidationException` → 422 `VALIDATION_FAILED`, `AuthenticationException` → 401 `UNAUTHENTICATED`, HttpException 403/404/429 → `FORBIDDEN`/`NOT_FOUND`/`TOO_MANY_REQUESTS`. Message của 404 được thay bằng `Not found.` để không lộ tên class model. `DomainException` không ghi vào log lỗi (`dontReport`).
 
 ### D13 – Xem thử tài liệu (T21)
 - File gốc nằm trong disk `local` (`storage/app/private/documents/...`), không có symlink public.

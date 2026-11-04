@@ -36,8 +36,9 @@ app/
 │   └── DocumentPreviewed.php           # (T21)
 ├── Exceptions/                         # domain exceptions, render ra {message, code}
 │   ├── DomainException.php
-│   ├── AttemptAlreadySubmittedException.php
-│   └── AttemptNotOwnedException.php
+│   ├── AttemptAlreadySubmittedException.php   # 409
+│   ├── AttemptNotSubmittedException.php       # 409, xem kết quả khi chưa nộp
+│   └── ExamNotAvailableException.php          # 422, đề nháp hoặc chưa có câu hỏi
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Admin/                      # web, middleware auth + role:admin
@@ -61,11 +62,12 @@ app/
 │   ├── Requests/                       # T10/T17 mọi input qua FormRequest
 │   │   ├── Admin/{Store,Update}ExamRequest.php
 │   │   ├── Admin/{Store,Update}QuestionRequest.php
-│   │   └── Api/{SaveAnswer,SubmitAttempt,ListPackages}Request.php
+│   │   └── Api/{ListExams,SaveAnswer,SubmitAttempt,ListPackages}Request.php
 │   └── Resources/                      # T16 format response
 │       ├── ExamResource.php
 │       ├── AttemptResource.php
 │       ├── AttemptQuestionResource.php  # KHÔNG có is_correct
+│       ├── AttemptSummaryResource.php   # response của submit: điểm + result_url
 │       ├── AttemptResultResource.php    # có đáp án đúng, chỉ sau khi nộp
 │       ├── PackageResource.php / PackageDetailResource.php
 │       └── DocumentResource.php
@@ -78,6 +80,7 @@ app/
 │       ├── ActivityLog.php
 │       └── PreviewLog.php              # (T21)
 ├── Observers/ExamObserver.php  QuestionObserver.php          # T15 + bust cache T19
+├── Policies/AttemptPolicy.php           # C5.3 chỉ chủ attempt được xem/nộp (route `can:`)
 ├── Providers/AppServiceProvider.php    # preventLazyLoading, RateLimiter, observers
 └── Services/                           # T17 toàn bộ business logic
     ├── Exam/ExamService.php            # CRUD + search + cache
@@ -89,7 +92,7 @@ app/
     ├── Package/DocumentPreviewService.php        # T21 signed URL + cắt file
     └── Statistics/PreviewStatisticsService.php   # T21
 
-config/exam.php                         # list_cache_seconds (T19); grace seconds sẽ thêm ở PR6
+config/exam.php                         # list_cache_seconds (T19), submit_grace_seconds (D7)
 database/
 ├── migrations/                         # MySQL + migration tạo index Mongo
 ├── factories/
