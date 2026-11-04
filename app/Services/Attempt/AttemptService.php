@@ -4,15 +4,19 @@ namespace App\Services\Attempt;
 
 use App\Enums\AttemptStatus;
 use App\Events\AttemptStarted;
+use App\Exceptions\AttemptAlreadySubmittedException;
 use App\Exceptions\ExamNotAvailableException;
 use App\Models\Exam;
 use App\Models\Mongo\Attempt;
 use App\Models\Option;
 use App\Models\Question;
 use App\Models\User;
+use Illuminate\Support\Arr;
 
 class AttemptService
 {
+    public function __construct(private readonly GradingService $grading) {}
+
     /**
      * Returns the student's open attempt for this exam, or starts a new one (T11, D8).
      * A new attempt has wasRecentlyCreated = true, which makes the API answer 201 instead of 200.
@@ -30,6 +34,18 @@ class AttemptService
         }
 
         return $this->start($user, $exam);
+    }
+
+    /**
+     * @param  array<int, list<int>>  $answers  question_id => option ids, from the request
+     */
+    public function submit(Attempt $attempt, array $answers): Attempt
+    {
+        if ($attempt->status === AttemptStatus::Submitted || ! $this->close($attempt, $answers)) {
+            throw new AttemptAlreadySubmittedException;
+        }
+
+        return $attempt;
     }
 
     private function start(User $user, Exam $exam): Attempt
@@ -77,5 +93,43 @@ class AttemptService
                 'is_correct' => $option->is_correct,
             ])->values()->all(),
         ])->values()->all();
+    }
+
+    /**
+     * Grades the attempt and marks it submitted in one conditional update (C4.4).
+     * Returns false when another request closed it first.
+     *
+     * @param  array<int, list<int>>  $requestAnswers
+     */
+    private function close(Attempt $attempt, array $requestAnswers): bool
+    {
+        $now = now();
+        $saved = $attempt->answers ?? [];
+
+        $answers = array_replace($saved, array_map(fn (array $ids) => array_map('intval', $ids), $requestAnswers));
+        $answers = Arr::only($answers, array_column($attempt->snapshot, 'question_id'));
+
+        $grade = $this->grading->grade($attempt->snapshot, $answers);
+
+        $updated = Attempt::query()
+            ->whereKey($attempt->getKey())
+            ->where('status', AttemptStatus::InProgress->value)
+            ->update([
+                'status' => AttemptStatus::Submitted->value,
+                'answers' => $answers,
+                'results' => $grade['results'],
+                'correct_count' => $grade['correct_count'],
+                'total_questions' => $grade['total_questions'],
+                'score' => $grade['score'],
+                'submitted_at' => $now,
+            ]);
+
+        if ($updated === 0) {
+            return false;
+        }
+
+        $attempt->refresh();
+
+        return true;
     }
 }

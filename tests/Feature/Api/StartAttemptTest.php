@@ -54,6 +54,24 @@ class StartAttemptTest extends TestCase
         $this->assertSame(1, Attempt::count());
     }
 
+    public function test_each_new_attempt_gets_its_own_order(): void
+    {
+        // 8 questions x 4 options: the chance of two identical orders is about 1 in 10^15.
+        $exam = Exam::factory()->withQuestions(8)->create();
+        Sanctum::actingAs(User::factory()->create());
+
+        $first = $this->postJson(route('api.attempts.store', $exam))->assertCreated();
+        $this->postJson(route('api.attempts.submit', $first->json('data.id')))->assertOk();
+        $second = $this->postJson(route('api.attempts.store', $exam))->assertCreated();
+
+        $order = fn ($response) => collect($response->json('data.questions'))
+            ->map(fn (array $q) => [$q['question_id'], array_column($q['options'], 'option_id')])
+            ->all();
+
+        $this->assertNotSame($first->json('data.id'), $second->json('data.id'));
+        $this->assertNotSame($order($first), $order($second));
+    }
+
     public function test_draft_or_empty_exam_cannot_be_started(): void
     {
         Sanctum::actingAs(User::factory()->create());
