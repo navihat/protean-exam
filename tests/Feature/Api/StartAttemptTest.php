@@ -39,6 +39,20 @@ class StartAttemptTest extends TestCase
         $this->assertEquals($attempt->started_at->copy()->addMinutes(15), $attempt->expires_at);
     }
 
+    public function test_starting_again_while_open_returns_the_same_attempt(): void
+    {
+        $exam = Exam::factory()->withQuestions(2)->create();
+        Sanctum::actingAs(User::factory()->create());
+
+        $first = $this->postJson(route('api.attempts.store', $exam))->assertCreated()->json('data.id');
+
+        $this->postJson(route('api.attempts.store', $exam))
+            ->assertOk()
+            ->assertJsonPath('data.id', $first);
+
+        $this->assertSame(1, Attempt::count());
+    }
+
     public function test_draft_or_empty_exam_cannot_be_started(): void
     {
         Sanctum::actingAs(User::factory()->create());

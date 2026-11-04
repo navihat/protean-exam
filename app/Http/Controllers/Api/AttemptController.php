@@ -14,7 +14,7 @@ class AttemptController extends Controller
 
     public function store(Request $request, Exam $exam): AttemptResource
     {
-        // A resource wrapping a just-created model answers 201.
-        return new AttemptResource($this->attempts->start($request->user(), $exam));
+        // A resource wrapping a just-created model answers 201; a resumed attempt answers 200.
+        return new AttemptResource($this->attempts->startOrResume($request->user(), $exam));
     }
 }

@@ -13,10 +13,25 @@ use App\Models\User;
 class AttemptService
 {
     /**
-     * Starts a new attempt with its own shuffled snapshot (T11).
-     * The new attempt has wasRecentlyCreated = true, which makes the API answer 201.
+     * Returns the student's open attempt for this exam, or starts a new one (T11, D8).
+     * A new attempt has wasRecentlyCreated = true, which makes the API answer 201 instead of 200.
      */
-    public function start(User $user, Exam $exam): Attempt
+    public function startOrResume(User $user, Exam $exam): Attempt
+    {
+        $open = Attempt::query()
+            ->where('user_id', $user->id)
+            ->where('exam_id', $exam->id)
+            ->where('status', AttemptStatus::InProgress->value)
+            ->first();
+
+        if ($open !== null && $open->expires_at->isFuture()) {
+            return $open;
+        }
+
+        return $this->start($user, $exam);
+    }
+
+    private function start(User $user, Exam $exam): Attempt
     {
         if (! $exam->is_published) {
             throw new ExamNotAvailableException;
