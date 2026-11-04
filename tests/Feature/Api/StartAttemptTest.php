@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Enums\AttemptStatus;
 use App\Models\Exam;
 use App\Models\Mongo\ActivityLog;
 use App\Models\Mongo\Attempt;
@@ -70,6 +71,24 @@ class StartAttemptTest extends TestCase
 
         $this->assertNotSame($first->json('data.id'), $second->json('data.id'));
         $this->assertNotSame($order($first), $order($second));
+    }
+
+    public function test_expired_open_attempt_is_closed_before_a_new_one_starts(): void
+    {
+        $exam = Exam::factory()->withQuestions(2)->create(['duration_minutes' => 15]);
+        Sanctum::actingAs(User::factory()->create());
+
+        $old = $this->postJson(route('api.attempts.store', $exam))->json('data.id');
+
+        $this->travel(20)->minutes();
+
+        $new = $this->postJson(route('api.attempts.store', $exam))->assertCreated()->json('data.id');
+
+        $this->assertNotSame($old, $new);
+        $closed = Attempt::find($old);
+        $this->assertSame(AttemptStatus::Submitted, $closed->status);
+        $this->assertTrue($closed->is_late);
+        $this->assertSame(0.0, $closed->score);
     }
 
     public function test_draft_or_empty_exam_cannot_be_started(): void

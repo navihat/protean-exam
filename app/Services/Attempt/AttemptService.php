@@ -33,6 +33,11 @@ class AttemptService
             return $open;
         }
 
+        if ($open !== null) {
+            // Time is up but it was never submitted: close it with the saved answers (D7).
+            $this->close($open, []);
+        }
+
         return $this->start($user, $exam);
     }
 
