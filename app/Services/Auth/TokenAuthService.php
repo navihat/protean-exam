@@ -3,6 +3,8 @@
 namespace App\Services\Auth;
 
 use App\Models\User;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -26,10 +28,12 @@ class TokenAuthService
             throw ValidationException::withMessages(['email' => __('auth.failed')]);
         }
 
-        return [
-            'user' => $user,
-            'token' => $user->createToken($deviceName)->plainTextToken,
-        ];
+        $token = $user->createToken($deviceName)->plainTextToken;
+
+        // Web logins fire this from the session guard; token logins must do it themselves (T15).
+        event(new Login('sanctum', $user, false));
+
+        return ['user' => $user, 'token' => $token];
     }
 
     /**
@@ -42,6 +46,7 @@ class TokenAuthService
 
         if ($token instanceof PersonalAccessToken) {
             $token->delete();
+            event(new Logout('sanctum', $user));
         }
     }
 }

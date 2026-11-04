@@ -30,6 +30,7 @@ class ActivityLog extends Model
     {
         return [
             'user_id' => 'integer',
+            'subject_id' => 'integer',
         ];
     }
 }
