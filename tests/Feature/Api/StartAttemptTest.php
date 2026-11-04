@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Exam;
+use App\Models\Mongo\ActivityLog;
 use App\Models\Mongo\Attempt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,5 +89,20 @@ class StartAttemptTest extends TestCase
         $this->getJson(route('api.attempts.show', '000000000000000000000000'))
             ->assertNotFound()
             ->assertJsonPath('code', 'NOT_FOUND');
+    }
+
+    public function test_starting_is_recorded_in_activity_log(): void
+    {
+        $student = User::factory()->create();
+        $exam = Exam::factory()->withQuestions(1)->create();
+        Sanctum::actingAs($student);
+
+        $id = $this->postJson(route('api.attempts.store', $exam))->json('data.id');
+
+        $log = ActivityLog::where('action', 'attempt.started')->sole();
+        $this->assertSame($student->id, $log->user_id);
+        $this->assertSame('exam', $log->subject_type);
+        $this->assertSame($exam->id, $log->subject_id);
+        $this->assertSame($id, $log->meta['attempt_id']);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services\Attempt;
 
 use App\Enums\AttemptStatus;
+use App\Events\AttemptStarted;
 use App\Exceptions\ExamNotAvailableException;
 use App\Models\Exam;
 use App\Models\Mongo\Attempt;
@@ -54,6 +55,8 @@ class AttemptService
             'started_at' => $now,
             'expires_at' => $now->copy()->addMinutes($exam->duration_minutes),
         ]);
+
+        AttemptStarted::dispatch($attempt);
 
         return $attempt;
     }
