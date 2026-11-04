@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ExamController;
 use Illuminate\Support\Facades\Route;
 
 Route::name('api.')->group(function () {
@@ -11,5 +12,7 @@ Route::name('api.')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::get('/me', [AuthController::class, 'me'])->name('me');
+
+        Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
     });
 });
