@@ -65,4 +65,28 @@ class StartAttemptTest extends TestCase
 
         $this->assertSame(0, Attempt::count());
     }
+
+    public function test_only_the_owner_can_read_an_attempt(): void
+    {
+        $exam = Exam::factory()->withQuestions(2)->create();
+        Sanctum::actingAs(User::factory()->create());
+        $id = $this->postJson(route('api.attempts.store', $exam))->json('data.id');
+
+        $shown = $this->getJson(route('api.attempts.show', $id))->assertOk()->assertJsonPath('data.id', $id);
+        $this->assertStringNotContainsString('is_correct', $shown->getContent());
+
+        Sanctum::actingAs(User::factory()->create());
+        $this->getJson(route('api.attempts.show', $id))
+            ->assertForbidden()
+            ->assertJsonPath('code', 'FORBIDDEN');
+    }
+
+    public function test_unknown_attempt_returns_404(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->getJson(route('api.attempts.show', '000000000000000000000000'))
+            ->assertNotFound()
+            ->assertJsonPath('code', 'NOT_FOUND');
+    }
 }

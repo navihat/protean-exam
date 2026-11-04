@@ -17,5 +17,9 @@ Route::name('api.')->group(function () {
         Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
         Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
         Route::post('/exams/{exam}/attempts', [AttemptController::class, 'store'])->name('attempts.store');
+
+        Route::get('/attempts/{attempt}', [AttemptController::class, 'show'])
+            ->middleware('can:view,attempt')
+            ->name('attempts.show');
     });
 });
