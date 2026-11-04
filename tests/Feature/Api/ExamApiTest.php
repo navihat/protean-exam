@@ -27,6 +27,21 @@ class ExamApiTest extends TestCase
             ->assertJsonStructure(['data', 'links', 'meta' => ['current_page', 'total']]);
     }
 
+    public function test_show_hides_drafts(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+        $published = Exam::factory()->withQuestions(1)->create();
+        $draft = Exam::factory()->draft()->create();
+
+        $this->getJson(route('api.exams.show', $published))
+            ->assertOk()
+            ->assertJsonPath('data.questions_count', 1);
+
+        $this->getJson(route('api.exams.show', $draft))
+            ->assertNotFound()
+            ->assertExactJson(['message' => 'Not found.', 'code' => 'NOT_FOUND']);
+    }
+
     public function test_invalid_page_returns_validation_error_format(): void
     {
         Sanctum::actingAs(User::factory()->create());

@@ -14,5 +14,6 @@ Route::name('api.')->group(function () {
         Route::get('/me', [AuthController::class, 'me'])->name('me');
 
         Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
+        Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
     });
 });

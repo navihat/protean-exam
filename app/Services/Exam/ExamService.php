@@ -5,6 +5,7 @@ namespace App\Services\Exam;
 use App\Models\Exam;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 
@@ -52,6 +53,18 @@ class ExamService
         // The cached paginator remembers the URL path of the request that filled the cache
         // (web page or API). Reset it so each caller gets links to its own URL.
         return $exams->withPath(Paginator::resolveCurrentPath());
+    }
+
+    /**
+     * Student-facing exam detail: a draft answers 404 as if it did not exist.
+     */
+    public function findPublished(Exam $exam): Exam
+    {
+        if (! $exam->is_published) {
+            throw (new ModelNotFoundException)->setModel(Exam::class, [$exam->id]);
+        }
+
+        return $exam->loadCount('questions');
     }
 
     public function flushPublishedListCache(): void

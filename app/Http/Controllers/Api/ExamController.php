@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ListExamsRequest;
 use App\Http\Resources\ExamResource;
+use App\Models\Exam;
 use App\Services\Exam\ExamService;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -17,5 +18,10 @@ class ExamController extends Controller
         return ExamResource::collection(
             $this->exams->paginatePublished($request->validated('q'), (int) ($request->validated('page') ?? 1))
         );
+    }
+
+    public function show(Exam $exam): ExamResource
+    {
+        return new ExamResource($this->exams->findPublished($exam));
     }
 }
