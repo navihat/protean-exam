@@ -2,6 +2,8 @@
 
 namespace App\Listeners;
 
+use App\Events\AttemptStarted;
+use App\Events\AttemptSubmitted;
 use App\Events\ContentChanged;
 use App\Models\Mongo\ActivityLog;
 use Illuminate\Auth\Events\Login;
@@ -23,6 +25,29 @@ class RecordActivity
     public function handleContentChanged(ContentChanged $event): void
     {
         $this->record($event->action, $this->request->user()?->getAuthIdentifier(), $event->subjectType, $event->subjectId, $event->meta);
+    }
+
+    /**
+     * subject_id stays a MySQL id (the exam, C4.2); the Mongo attempt id goes into meta.
+     * The user comes from the attempt, not the request, because an expired attempt can be
+     * closed while its owner starts the exam again.
+     */
+    public function handleAttemptStarted(AttemptStarted $event): void
+    {
+        $attempt = $event->attempt;
+
+        $this->record('attempt.started', $attempt->user_id, 'exam', $attempt->exam_id, ['attempt_id' => $attempt->id]);
+    }
+
+    public function handleAttemptSubmitted(AttemptSubmitted $event): void
+    {
+        $attempt = $event->attempt;
+
+        $this->record('attempt.submitted', $attempt->user_id, 'exam', $attempt->exam_id, [
+            'attempt_id' => $attempt->id,
+            'score' => $attempt->score,
+            'is_late' => $attempt->is_late,
+        ]);
     }
 
     public function handleLogin(Login $event): void

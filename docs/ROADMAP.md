@@ -18,13 +18,13 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 - [x] **PR5a `feat/T10-admin-exam-crud`**: CRUD đề và câu hỏi (FormRequest, paginate, search), `ExamService`, `QuestionService`, `preventLazyLoading`
 - [x] **PR5b `feat/T15-T19-activity-log-cache`**: Observer cho exam/question, event, listener `RecordActivity`, cache danh sách đề (T19)
   - Test: tạo, sửa, xoá đề hoặc câu hỏi đều ghi `activity_logs` qua Observer; cache danh sách đề bị xoá khi đề thay đổi
-- [ ] **PR6 `feat/T11-T12-T16-attempt-api`**: `AttemptService::startOrResume`, `GradingService`, API exams/attempts/submit/result, Resource, xử lý lỗi tập trung, `AttemptPolicy`
+- [x] **PR6 `feat/T11-T12-T16-attempt-api`**: `AttemptService::startOrResume`, `GradingService`, API exams/attempts/submit/result, Resource, xử lý lỗi tập trung, `AttemptPolicy`
   - Test bắt buộc: **chấm điểm đúng**, **nộp quá giờ**, response không lộ `is_correct`, 2 lần start ra thứ tự khác nhau, nộp 2 lần trả 409
 - [ ] **PR7 `feat/T20-autosave`**: partial unique index, autosave atomic, `remaining_seconds` tính theo server, lazy finalize
   - Test: autosave rồi đọc lại còn đáp án; start lần 2 trả attempt cũ; không có 2 attempt in_progress; autosave sau giờ trả 409
 - [ ] **PR8 `feat/T11-T13-student-ui`**: trang danh sách đề, trang làm bài (Alpine: đồng hồ, autosave, nộp), trang kết quả
 - [ ] **PR9 `feat/T14-admin-statistics`**: `ExamStatisticsService` (3 pipeline aggregation), trang và API thống kê
-  - Test: seed dữ liệu attempt đã biết trước → số liệu trả về khớp
+  - Test: seed dữ liệu attempt đã biết trước → số liệu trả về khớp; attempt của admin không được tính (D3)
 
 ## Nâng cao
 
@@ -51,14 +51,14 @@ Test được viết **kèm từng PR** (C8.1), nên T18 hoàn thành dần.
 | T08 Collection Mongo + index | PR3 | ✅ |
 | T09 Auth + role | PR4 | ✅ |
 | T10 CRUD admin | PR5a | ✅ |
-| T11 Bắt đầu làm bài | PR6, PR8 | ☐ |
-| T12 Nộp + chấm | PR6 | ☐ |
+| T11 Bắt đầu làm bài | PR6, PR8 | ◐ API xong; trang làm bài ở PR8 |
+| T12 Nộp + chấm | PR6 | ✅ |
 | T13 Trang kết quả | PR8 | ☐ |
 | T14 Thống kê aggregation | PR9 | ☐ |
-| T15 Activity log | PR5b, PR6 | ◐ exam/question/auth xong; attempt ở PR6 |
-| T16 API REST | PR6 | ☐ |
+| T15 Activity log | PR5b, PR6 | ✅ |
+| T16 API REST | PR6 | ✅ |
 | T17 Tổ chức code | toàn bộ | ☐ |
-| T18 ≥ 5 feature test | toàn bộ | ☐ |
+| T18 ≥ 5 feature test | toàn bộ | ✅ có test chấm điểm và nộp quá giờ; tiếp tục bổ sung theo PR |
 | T19 Cache + Postman | PR5b, PR12 | ◐ cache xong; Postman ở PR12 |
 | T20 Autosave | PR7 | ☐ |
 | T21 IELTS BE | PR10 | ☐ |
